@@ -1,4 +1,6 @@
-import sbt.inc.Analysis
+import sbt.internal.inc.Analysis
+import xsbti.compile.CompileAnalysis
+
 import interplay.ScalaVersions.scala212
 
 val scala213 = "2.13.0"
@@ -12,7 +14,7 @@ val Versions = new {
 
 lazy val root = project
   .in(file("."))
-  .enablePlugins(PlayRootProject, CrossPerProjectPlugin)
+  .enablePlugins(PlayRootProject)
   .aggregate(core, plugin)
   .settings(
     name := "play-ebean-root",
@@ -22,13 +24,14 @@ lazy val root = project
 lazy val core = project
   .in(file("play-ebean"))
   .enablePlugins(Playdoc, PlayLibrary, JacocoPlugin)
+  .configs(Docs)
   .settings(
     name := "play-ebean",
     crossScalaVersions := Seq(scala212, scala213),
     libraryDependencies ++= playEbeanDeps,
     compile in Compile := enhanceEbeanClasses(
       (dependencyClasspath in Compile).value,
-      (compile in Compile).value,
+      (compile in Compile).value.asInstanceOf[Analysis],
       (classDirectory in Compile).value,
       "play/db/ebean/**"
     ),
@@ -37,7 +40,7 @@ lazy val core = project
 
 lazy val plugin = project
   .in(file("sbt-play-ebean"))
-  .enablePlugins(PlaySbtPlugin)
+  .enablePlugins(PlaySbtPlugin, SbtPlugin)
   .settings(
     name := "sbt-play-ebean",
     organization := "com.typesafe.sbt",
